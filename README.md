@@ -4,7 +4,7 @@
 
 # Manchester Decoder with Configurable Bitrate Based on CLB Using the PIC16F13145 Microcontroller with MCC Melody
 
-The repository contains the Manchester Decoder, an MPLAB® X project, using Core Independent Peripherals (CIPs) by following the interaction between Custom Logic Block (CLB), Serial Peripheral Interface (SPI) and Timer (TMR0) peripherals. 
+The repository contains a Manchester Decoder hardware implementation using the Configurable Logic Block (CLB). It uses other peripherals to support the CLB including Serial Peripheral Interface (SPI) and Timer (TMR0) peripherals.
 
 The CLB peripheral is a collection of logic elements that can be programmed to perform a wide variety of digital logic functions. The logic function may be completely combinatorial, sequential, or a combination of the two, enabling users to incorporate hardware-based custom logic into their applications.
 
@@ -25,7 +25,7 @@ More details and code examples on the PIC16F13145 can be found at the following 
 
 ## Software Used
 
-- [MPLAB X IDE v6.20 or newer](https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_MMTCha_PIC16F13145&utm_content=pic16f13145-manchester-decoder-mplab-mcc&utm_bu=MCU08)
+- [MPLAB® X IDE v6.20 or newer](https://www.microchip.com/en-us/tools-resources/develop/mplab-x-ide?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_MMTCha_PIC16F13145&utm_content=pic16f13145-manchester-decoder-mplab-mcc&utm_bu=MCU08)
 - [MPLAB® XC8 v2.46 or newer](https://www.microchip.com/en-us/tools-resources/develop/mplab-xc-compilers?utm_source=GitHub&utm_medium=TextLink&utm_campaign=MCU8_MMTCha_PIC16F13145&utm_content=pic16f13145-manchester-decoder-mplab-mcc&utm_bu=MCU08)
 - [PIC16F1xxxx_DFP v1.25.390 or newer](https://packs.download.microchip.com/)
 
@@ -46,11 +46,18 @@ This project is a CIP implementation of a Manchester decoder with configurable b
 
 <br><img src="images/clb_decoder_circuit.PNG" width="1000">
 
-The decoder concept is using the transition that occurs in the middle of each bit (clock edges). This implementation assumes that first transition following an idle period is a clock edge, and not a data edge. The easiest way to ensure this is to use the start and stop bytes from the encoded data frames. 
-
-The encoded data is received through a single data wire on the RA2 pin. A falling edge (logic '0') will reset a flip-flop, while a rising edge (logic '1') will set the same flip-flop. A timer peripheral (TMR0) is used to invalidate any edge that appears in a period smaller than 3/4 of the bitrate period. The bitrate of the decoder is configurable by modifying the period of the validation timer.
-
+The current implementation uses the transitions that occur is the middle of each Manchester-encoded data bit (clock edges) to decode the incomming data stream. For correct decoder synchronization, the first edge after an idle period must be a clock edge. This is ensured by the usage of start and stop bytes in the data frames (software protocol).
+ 
+The encoded data is received through a wire on the RA2 pin. The rising and falling edges of the incoming signal are detected using CLB edge detectors. The detected edges, combined through an OR gate, are used to reset a D flip-flop that creates a validation time slot together with a timer peripheral (TMR0). The TMR0 overflow, configured to 3/4 of the Manchester bitrate, sets the flip-flop used for time slot validation. By using this validation mechanism, only the clock edges are enabled to generate the decoded data stream (SDO_SPI signal on PPS_OUT1) through two AND gates, as below:
+- any edge that appears before 3/4 of the bit period is ignored
+- a falling edge that appears after 3/4 of the bit period will reset the output flip-flop (logic `0`)
+- a rising edge that appears after 3/4 of the bit period will set the output flip-flop (logic `1`)  
+ 
 The decoded data stream is sent via the SPI interface to an SPI Client (MSSP1 in this example). The SPI data is the output of the flip-flop, while the validation window is used as the SPI clock. The decoded data is further transmitted via the serial communication (UART).
+ 
+Note: The TMR0 overflow is proportional with the Manchester-encoded bitrate. To change the bitrate only the value of the `MANCHESTER_BAUD_RATE` macro must be updated, as for example:
+ 
+`#define MANCHESTER_BAUD_RATE 625000`
  
 ## Setup 
 
@@ -161,10 +168,11 @@ This chapter demonstrates how to use the MPLAB X IDE to program a PIC® device w
     <br>Right click the `Example_Project.X` project and select **Clean and Build**.
     <br><img src="images/Program_Clean_and_Build.png" width="600">
 
-5.  Select **PICxxxxx Curiosity Nano** in the Connected Hardware Tool section of the project settings:
+5.  Select PICxxxxx Curiosity Nano in the Connected Hardware Tool section of the project settings:
     <br>Right click the project and click **Properties**.
     <br>Click the arrow under the Connected Hardware Tool.
-    <br>Select **PICxxxxx Curiosity Nano** (click the **SN**), click **Apply** and then click **OK**:
+    <br>Select PICxxxxx Curiosity Nano by clicking on the SN.
+    <br>Click **Apply** and then **OK**.
     <br><img src="images/Program_Tool_Selection.png" width="600">
 
 6.  Program the project to the board.
