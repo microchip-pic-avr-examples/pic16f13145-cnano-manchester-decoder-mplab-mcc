@@ -4,11 +4,11 @@
 
 # Manchester Decoder with Configurable Bitrate Based on CLB Using the PIC16F13145 Microcontroller with MCC Melody
 
-The repository contains a Manchester Decoder hardware implementation using the Configurable Logic Block (CLB). It uses other peripherals to support the CLB including Serial Peripheral Interface (SPI) and Timer (TMR0) peripherals.
+The repository contains a Manchester Decoder hardware implementation using the Configurable Logic Block (CLB). It uses other peripherals to support the CLB, including Serial Peripheral Interface (SPI) and Timer (TMR0) peripherals.
 
-The CLB peripheral is a collection of logic elements that can be programmed to perform a wide variety of digital logic functions. The logic function may be completely combinatorial, sequential, or a combination of the two, enabling users to incorporate hardware-based custom logic into their applications.
+The CLB peripheral is a collection of logic elements that can be programmed to perform a variety of digital logic functions. The logic function may be completely combinatorial, sequential or a combination of the two, enabling users to incorporate hardware-based custom logic into their applications.
 
-The Manchester code combines data and clock into a single signal, where one clock cycle is a Manchester-bit period with a transition occurring in the middle of it. Logic '0' is represented by a falling edge (HIGH to LOW transition) in the middle of the bit period, and logic '1' is represented by a rising edge (LOW to HIGH transition) in the middle of the bit period.
+The Manchester code combines data and clock into a single signal, where one clock cycle is a Manchester-bit period with a transition occurring in the middle of it. Logic `0` is represented by a falling edge (HIGH to LOW transition) in the middle of the bit period, and logic `1` is represented by a rising edge (LOW to HIGH transition) in the middle of the bit period.
 
 <br><img src="images/manchester_waveform.png" width="600">
 
@@ -38,7 +38,7 @@ More details and code examples on the PIC16F13145 can be found at the following 
 
 ## Operation
 
-To program the Curiosity Nano board with this MPLAB X project, follow the steps provided in the [How to Program the Curiosity Nano Board](#how-to-program-the-curiosity-nano-board) chapter.<br><br>
+To program the Curiosity Nano board with this MPLAB® X project, follow the steps provided in the [How to Program the Curiosity Nano Board](#how-to-program-the-curiosity-nano-board) chapter.<br><br>
 
 ## Concept
 
@@ -46,14 +46,14 @@ This project is a CIP implementation of a Manchester decoder with configurable b
 
 <br><img src="images/clb_decoder_circuit.PNG" width="1000">
 
-The current implementation uses the transitions that occur is the middle of each Manchester-encoded data bit (clock edges) to decode the incomming data stream. For correct decoder synchronization, the first edge after an idle period must be a clock edge. This is ensured by the usage of start and stop bytes in the data frames (software protocol).
+The current implementation uses the transitions that occur in the middle of each Manchester-encoded data bit (clock edges) to decode the incoming data stream. For a correct decoder synchronization, the first edge after an idle period must be a clock edge. This is ensured by the usage of start and stop bytes in the data frames (software protocol).
  
-The encoded data is received through a wire on the RA2 pin. The rising and falling edges of the incoming signal are detected using CLB edge detectors. The detected edges, combined through an OR gate, are used to reset a D flip-flop that creates a validation time slot together with a timer peripheral (TMR0). The TMR0 overflow, configured to 3/4 of the Manchester bitrate, sets the flip-flop used for time slot validation. By using this validation mechanism, only the clock edges are enabled to generate the decoded data stream (SDO_SPI signal on PPS_OUT1) through two AND gates, as below:
-- any edge that appears before 3/4 of the bit period is ignored
-- a falling edge that appears after 3/4 of the bit period will reset the output flip-flop (logic `0`)
-- a rising edge that appears after 3/4 of the bit period will set the output flip-flop (logic `1`)  
- 
-The decoded data stream is sent via the SPI interface to an SPI Client (MSSP1 in this example). The SPI data is the output of the flip-flop, while the validation window is used as the SPI clock. The decoded data is further transmitted via the serial communication (UART).
+The encoded data is received through a wire on the RA2 pin. The rising and falling edges of the incoming signal are detected using CLB edge detectors. A validation time slot is created using a D flip-flop with enable and reset. The detected edges, combined through an OR gate, reset the flip-flop, while the TMR0 overflow, configured to 3/4 of the Manchester bitrate, sets the same flip-flop. By using this validation mechanism, only the clock edges are validated and used to generate the decoded data stream (SDO_SPI signal on PPS_OUT1) through two AND gates, as shown below:
+- A rising edge that appears after 3/4 of the bit period will set the output flip-flop (logic `1`)
+- A falling edge that appears after 3/4 of the bit period will reset the output flip-flop (logic `0`)
+- Any edge that appears before 3/4 of the bit period is ignored
+
+The decoded data stream is sent via the SPI interface to an SPI Client, MSSP1 in this case. The SPI data is the output of the flip-flop, while the validation window is used as the SPI clock. The decoded data is further transmitted via the serial communication (UART).
  
 Note: The TMR0 overflow is proportional with the Manchester-encoded bitrate. To change the bitrate only the value of the `MANCHESTER_BAUD_RATE` macro must be updated, as for example:
  
@@ -61,11 +61,11 @@ Note: The TMR0 overflow is proportional with the Manchester-encoded bitrate. To 
  
 ## Setup 
 
-The following peripheral and clock configurations are set up using the MPLAB Code Configurator (MCC) Melody for the PIC16F13145:
+The following peripheral and clock configurations are set up using the MPLAB® Code Configurator (MCC) Melody for the PIC16F13145:
 
 1. Configuration Bits:
     - External Oscillator mode selection bits: Oscillator not enabled
-    - Power-up default value for COSC bits: HFINTOSC (1MHz)
+    - Power-up default value for COSC bits: HFINTOSC (1 MHz)
     - Brown-out reset enable bits: Brown-out reset disabled
     - WDT operating mode: WDT Disabled, SEN is ignored
     <br><img src="images/mcc_config_bits.PNG" width="400">
@@ -133,7 +133,7 @@ The following peripheral and clock configurations are set up using the MPLAB Cod
 
 ## Demo
 
-In the demo, the Manchester-encoded messages received on the RA2 pin are decoded by the CLB logic and sent via the SPI interface (CLB is SPI Host). The CPU reads the data from its SPI Client interface and forwards it to the serial terminal using the onboard UART interface.
+In the demo, the Manchester-encoded messages received on the RA2 pin are decoded by the CLB logic and sent via the SPI interface (CLB is the SPI Host). The CPU reads the data from its SPI Client interface and forwards it to the serial terminal using the onboard UART interface.
 
 If this example is used in combination with [PIC16F13145 Manchester Encoder](https://bitbucket.microchip.com/scm/mcu8npiapps/pic16f13145-cnano-manchester-encoder-mplab-mcc.git), the ```PIC16F13145 Manchester Encoder-Decoder\r\n``` message will appear periodically in the serial terminal. Note that both projects (Encoder and Decoder) must use the same bitrate, as for example: 
 
@@ -154,7 +154,7 @@ This example demonstrates the capabilities of the CLB, a CIP, that can decode a 
 
 ##  How to Program the Curiosity Nano Board 
 
-This chapter demonstrates how to use the MPLAB X IDE to program a PIC® device with an `Example_Project.X`. This is applicable to other projects.
+This chapter demonstrates how to use the MPLAB® X IDE to program a PIC® device with an `Example_Project.X`. This is applicable to other projects.
 
 1.  Connect the board to the PC.
 
